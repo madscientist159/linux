@@ -75,11 +75,11 @@ enum {
 	ncsi_dev_state_config_ec,
 	ncsi_dev_state_config_gls,
 	ncsi_dev_state_config_done,
-	ncsi_dev_state_stop_select	= 0x0401,
-	ncsi_dev_state_stop_dcnt,
-	ncsi_dev_state_stop_dc,
-	ncsi_dev_state_stop_deselect,
-	ncsi_dev_state_stop_done
+	ncsi_dev_state_suspend_select	= 0x0401,
+	ncsi_dev_state_suspend_dcnt,
+	ncsi_dev_state_suspend_dc,
+	ncsi_dev_state_suspend_deselect,
+	ncsi_dev_state_suspend_done
 };
 
 struct ncsi_dev_priv {
@@ -149,5 +149,11 @@ void ncsi_find_package_and_channel(struct ncsi_dev_priv *ndp,
 struct ncsi_req *ncsi_alloc_req(struct ncsi_dev_priv *ndp);
 void ncsi_free_req(struct ncsi_req *nr, bool check, bool timeout);
 struct ncsi_dev *ncsi_find_dev(struct net_device *dev);
+
+/* Packet handlers */
+int ncsi_xmit_cmd(struct ncsi_cmd_arg *nca);
+int ncsi_rcv_rsp(struct sk_buff *skb, struct net_device *dev,
+		 struct packet_type *pt, struct net_device *orig_dev);
+int ncsi_aen_handler(struct ncsi_dev_priv *ndp, struct sk_buff *skb);
 
 #endif /* __NCSI_INTERNAL_H__ */
