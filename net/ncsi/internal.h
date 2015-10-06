@@ -37,14 +37,6 @@ struct ncsi_package {
 	struct list_head	np_node;
 };
 
-struct ncsi_skb_parms {
-	unsigned int		nsp_valid;
-	unsigned int		nsp_portid;
-	struct nlmsghdr		nsp_nlh;
-};
-
-#define NCSI_CB(skb)	(*(struct ncsi_skb_parms*)&((skb)->cb))
-
 struct ncsi_req {
 	unsigned char		nr_id;
 	bool			nr_used;
@@ -107,7 +99,6 @@ struct ncsi_cmd_arg {
 	unsigned char		nca_package;
 	unsigned char		nca_channel;
 	unsigned short		nca_payload;
-	struct nlmsghdr		*nca_nlh;
 	unsigned int		nca_portid;
 	union {
 		unsigned char	nca_bytes[16];
@@ -156,5 +147,4 @@ int ncsi_xmit_cmd(struct ncsi_cmd_arg *nca);
 int ncsi_rcv_rsp(struct sk_buff *skb, struct net_device *dev,
 		 struct packet_type *pt, struct net_device *orig_dev);
 int ncsi_aen_handler(struct ncsi_dev_priv *ndp, struct sk_buff *skb);
-
 #endif /* __NCSI_INTERNAL_H__ */

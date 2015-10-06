@@ -307,14 +307,6 @@ static struct ncsi_req *ncsi_alloc_cmd_req(struct ncsi_cmd_arg *nca)
 	skb->dev = dev;
 	skb->protocol = htons(ETH_P_NCSI);
 
-	if (nca->nca_nlh) {
-		NCSI_CB(skb).nsp_valid = 1;
-		memcpy(&NCSI_CB(skb).nsp_nlh, nca->nca_nlh,
-		       nlmsg_total_size(sizeof(struct ncsi_msg)));
-	} else {
-		NCSI_CB(skb).nsp_valid = 0;
-	}
-
 	return nr;
 }
 

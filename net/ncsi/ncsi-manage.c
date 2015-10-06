@@ -403,7 +403,6 @@ static void ncsi_dev_config(struct ncsi_dev_priv *ndp)
 	int ret;
 
 	nca.nca_ndp = ndp;
-	nca.nca_nlh = NULL;
 
 	/* When we're reconfiguring the active channel, the active package
 	 * should be selected and the old setting on the active channel
@@ -515,7 +514,6 @@ static void ncsi_dev_start(struct ncsi_dev_priv *ndp)
 	int ret;
 
 	nca.nca_ndp = ndp;
-	nca.nca_nlh = NULL;
 	switch (nd->nd_state) {
 	case ncsi_dev_state_start:
 		nd->nd_state = ncsi_dev_state_start_deselect;
@@ -689,7 +687,6 @@ static void ncsi_dev_suspend(struct ncsi_dev_priv *ndp)
 	int ret;
 
 	nca.nca_ndp = ndp;
-	nca.nca_nlh = NULL;
 	switch (nd->nd_state) {
 	case ncsi_dev_state_suspend:
 		/* If there're no active channel, we're done */
