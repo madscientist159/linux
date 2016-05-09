@@ -1285,18 +1285,9 @@ static const struct net_device_ops ftgmac100_netdev_ops = {
 
 static void ftgmac100_ncsi_handler(struct ncsi_dev *nd)
 {
-	struct net_device *netdev = nd->nd_dev;
-
-	if (nd->nd_state != ncsi_dev_state_functional)
-		return;
-
-	if (nd->nd_link_up) {
-		pr_info("NCSI dev is up\n");
-		netif_start_queue(netdev);
-	} else {
-		pr_info("NCSI dev is down\n");
-		ftgmac100_stop_dev(netdev);
-	}
+	if (nd->nd_state == ncsi_dev_state_functional)
+		pr_info("NCSI interface %s\n",
+			nd->nd_link_up ? "up" : "down");
 }
 /******************************************************************************
  * struct platform_driver functions
