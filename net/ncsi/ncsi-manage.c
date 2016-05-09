@@ -372,26 +372,6 @@ struct ncsi_dev *ncsi_find_dev(struct net_device *dev)
 	return NULL;
 }
 
-static int ncsi_select_active_channel(struct ncsi_dev_priv *ndp)
-{
-	struct ncsi_package *np;
-	struct ncsi_channel *nc;
-
-	/* For now, we simply choose the first valid channel as active one.
-	 * There might be more factors, like the channel's capacity, can
-	 * be considered to pick the active channel in future.
-	 */
-	NCSI_FOR_EACH_PACKAGE(ndp, np) {
-		NCSI_FOR_EACH_CHANNEL(np, nc) {
-			ndp->ndp_active_package = np;
-			ndp->ndp_active_channel = nc;
-			return 0;
-		}
-	}
-
-	return -ENXIO;
-}
-
 static void ncsi_dev_config(struct ncsi_dev_priv *ndp)
 {
 	struct ncsi_dev *nd = &ndp->ndp_ndev;
@@ -504,7 +484,28 @@ error:
 	nd->nd_handler(nd);
 }
 
-static void ncsi_dev_start(struct ncsi_dev_priv *ndp)
+static void ncsi_choose_active_channel(struct ncsi_dev_priv *ndp)
+{
+	struct ncsi_package *np;
+	struct ncsi_channel *nc;
+	struct ncsi_channel_mode *ncm;
+
+	ndp->ndp_active_package = NULL;
+	ndp->ndp_active_channel = NULL;
+	NCSI_FOR_EACH_PACKAGE(ndp, np) {
+		NCSI_FOR_EACH_CHANNEL(np, nc) {
+			ncm = &nc->nc_modes[NCSI_MODE_LINK];
+			if (ndp->ndp_active_channel ||
+			    !(ncm->ncm_data[2] & 0x1))
+				continue;
+
+			ndp->ndp_active_package = np;
+			ndp->ndp_active_channel = nc;
+		}
+	}
+}
+
+static void ncsi_dev_probe(struct ncsi_dev_priv *ndp)
 {
 	struct ncsi_dev *nd = &ndp->ndp_ndev;
 	struct ncsi_package *np;
@@ -515,10 +516,10 @@ static void ncsi_dev_start(struct ncsi_dev_priv *ndp)
 
 	nca.nca_ndp = ndp;
 	switch (nd->nd_state) {
-	case ncsi_dev_state_start:
-		nd->nd_state = ncsi_dev_state_start_deselect;
+	case ncsi_dev_state_probe:
+		nd->nd_state = ncsi_dev_state_probe_deselect;
 		/* Fall through */
-	case ncsi_dev_state_start_deselect:
+	case ncsi_dev_state_probe_deselect:
 		atomic_set(&ndp->ndp_pending_reqs, 8);
 
 		/* Deselect all possible packages */
@@ -531,9 +532,9 @@ static void ncsi_dev_start(struct ncsi_dev_priv *ndp)
 				goto error;
 		}
 
-		nd->nd_state = ncsi_dev_state_start_package;
+		nd->nd_state = ncsi_dev_state_probe_package;
 		break;
-	case ncsi_dev_state_start_package:
+	case ncsi_dev_state_probe_package:
 		atomic_set(&ndp->ndp_pending_reqs, 16);
 
 		/* Select all possible packages */
@@ -556,34 +557,45 @@ static void ncsi_dev_start(struct ncsi_dev_priv *ndp)
 				goto error;
 		}
 
-		nd->nd_state = ncsi_dev_state_start_channel;
+		nd->nd_state = ncsi_dev_state_probe_channel;
 		break;
-	case ncsi_dev_state_start_channel:
-		/* The available packages should have been detected. To
-		 * iterate every package to probe its channels.
+	case ncsi_dev_state_probe_channel:
+		if (!ndp->ndp_active_package)
+			ndp->ndp_active_package = list_first_or_null_rcu(
+							&ndp->ndp_packages,
+							struct ncsi_package,
+							np_node);
+		else if (list_is_last(&ndp->ndp_active_package->np_node,
+				      &ndp->ndp_packages))
+			ndp->ndp_active_package = NULL;
+		else
+			ndp->ndp_active_package = list_next_entry(
+							ndp->ndp_active_package,
+							np_node);
+
+		/*
+		 * All available packages and channels are enumerated. The
+		 * enumeration happens for once when the NCSI interface is
+		 * started. So we need continue to start the interface after
+		 * the enumeration.
+		 *
+		 * We have to choose an active channel before configuring it.
+		 * Note that we possibly don't have active channel in extreme
+		 * situation.
 		 */
 		if (!ndp->ndp_active_package) {
-			ndp->ndp_active_package = list_first_or_null_rcu(
-				&ndp->ndp_packages, struct ncsi_package,
-				np_node);
-			if (!ndp->ndp_active_package)
+			ndp->ndp_flags |= NCSI_DEV_PRIV_FLAG_POPULATED;
+
+			ncsi_choose_active_channel(ndp);
+			if (!ndp->ndp_active_channel)
 				goto error;
-		} else {
-			if (list_is_last(&ndp->ndp_active_package->np_node,
-					 &ndp->ndp_packages)) {
-				nd->nd_state = ncsi_dev_state_start_active;
-				goto choose_active_channel;
-			}
 
-			ndp->ndp_active_package = list_entry_rcu(
-				ndp->ndp_active_package->np_node.next,
-				struct ncsi_package, np_node);
+			nd->nd_state = ncsi_dev_state_config;
+			return ncsi_dev_config(ndp);
 		}
-		/* Fall through */
-	case ncsi_dev_state_start_sp:
-		atomic_set(&ndp->ndp_pending_reqs, 1);
 
-		/* Select the specific package */
+		/* Select the active package */
+		atomic_set(&ndp->ndp_pending_reqs, 1);
 		nca.nca_type = NCSI_PKT_CMD_SP;
 		nca.nca_bytes[0] = 1;
 		nca.nca_package = ndp->ndp_active_package->np_id;
@@ -592,9 +604,9 @@ static void ncsi_dev_start(struct ncsi_dev_priv *ndp)
 		if (ret)
 			goto error;
 
-		nd->nd_state = ncsi_dev_state_start_cis;
+		nd->nd_state = ncsi_dev_state_probe_cis;
 		break;
-	case ncsi_dev_state_start_cis:
+	case ncsi_dev_state_probe_cis:
 		atomic_set(&ndp->ndp_pending_reqs, 0x20);
 
 		/* Clear initial state */
@@ -607,22 +619,22 @@ static void ncsi_dev_start(struct ncsi_dev_priv *ndp)
 				goto error;
 		}
 
-		nd->nd_state = ncsi_dev_state_start_gvi;
+		nd->nd_state = ncsi_dev_state_probe_gvi;
 		break;
-	case ncsi_dev_state_start_gvi:
-	case ncsi_dev_state_start_gc:
-		/* The available channels of the active package should have
-		 * been populated.
-		 */
+	case ncsi_dev_state_probe_gvi:
+	case ncsi_dev_state_probe_gc:
+	case ncsi_dev_state_probe_gls:
 		np = ndp->ndp_active_package;
 		atomic_set(&ndp->ndp_pending_reqs,
 			   atomic_read(&np->np_channel_num));
 
 		/* Get version information or get capacity */
-		if (nd->nd_state == ncsi_dev_state_start_gvi)
+		if (nd->nd_state == ncsi_dev_state_probe_gvi)
 			nca.nca_type = NCSI_PKT_CMD_GVI;
-		else
+		else if (nd->nd_state == ncsi_dev_state_probe_gc)
 			nca.nca_type = NCSI_PKT_CMD_GC;
+		else
+			nca.nca_type = NCSI_PKT_CMD_GLS;
 
 		nca.nca_package = np->np_id;
 		NCSI_FOR_EACH_CHANNEL(np, nc) {
@@ -632,12 +644,14 @@ static void ncsi_dev_start(struct ncsi_dev_priv *ndp)
 				goto error;
 		}
 
-		if (nd->nd_state == ncsi_dev_state_start_gvi)
-			nd->nd_state = ncsi_dev_state_start_gc;
+		if (nd->nd_state == ncsi_dev_state_probe_gvi)
+			nd->nd_state = ncsi_dev_state_probe_gc;
+		else if (nd->nd_state == ncsi_dev_state_probe_gc)
+			nd->nd_state = ncsi_dev_state_probe_gls;
 		else
-			nd->nd_state = ncsi_dev_state_start_dp;
+			nd->nd_state = ncsi_dev_state_probe_dp;
 		break;
-	case ncsi_dev_state_start_dp:
+	case ncsi_dev_state_probe_dp:
 		atomic_set(&ndp->ndp_pending_reqs, 1);
 
 		/* Deselect the active package */
@@ -648,31 +662,16 @@ static void ncsi_dev_start(struct ncsi_dev_priv *ndp)
 		if (ret)
 			goto error;
 
-		nd->nd_state = ncsi_dev_state_start_channel;
+		/* Scan channels in next package */
+		nd->nd_state = ncsi_dev_state_probe_channel;
 		break;
-	case ncsi_dev_state_start_active:
-choose_active_channel:
-		/* All packages and channels should have been populated. Also,
-		 * the information for all channels should have been retrieved.
-		 */
-		ndp->ndp_active_package = NULL;
-		ncsi_select_active_channel(ndp);
-		if (!ndp->ndp_active_package ||
-		    !ndp->ndp_active_channel)
-			goto error;
-
-		/* To configure the active channel */
-		nd->nd_state = ncsi_dev_state_config_sma;
-		ncsi_dev_config(ndp);
 	default:
-		pr_debug("%s: Unrecognized NCSI dev state 0x%x\n",
-			 __func__, nd->nd_state);
+		pr_warn("%s: Unrecognized NCSI dev state 0x%x\n",
+			__func__, nd->nd_state);
 	}
 
 	return;
-
 error:
-	ndp->ndp_flags &= ~NCSI_DEV_PRIV_FLAG_CHANGE_ACTIVE;
 	nd->nd_state = ncsi_dev_state_functional;
 	nd->nd_link_up = 0;
 	nd->nd_handler(nd);
@@ -745,8 +744,8 @@ done:
 			nd->nd_link_up = 0;
 			nd->nd_handler(nd);
 		} else {
-			nd->nd_state = ncsi_dev_state_start;
-			ncsi_dev_start(ndp);
+			nd->nd_state = ncsi_dev_state_config;
+			ncsi_dev_config(ndp);
 		}
 
 		break;
@@ -763,8 +762,8 @@ static void ncsi_dev_work(struct work_struct *work)
 	struct ncsi_dev *nd = &ndp->ndp_ndev;
 
 	switch (nd->nd_state & ncsi_dev_state_major) {
-	case ncsi_dev_state_start:
-		ncsi_dev_start(ndp);
+	case ncsi_dev_state_probe:
+		ncsi_dev_probe(ndp);
 		break;
 	case ncsi_dev_state_suspend:
 		ncsi_dev_suspend(ndp);
@@ -858,10 +857,18 @@ int ncsi_start_dev(struct ncsi_dev *nd)
 	    nd->nd_state != ncsi_dev_state_functional)
 		return -ENOTTY;
 
-	nd->nd_state = ncsi_dev_state_start;
-	schedule_work(&ndp->ndp_work);
+	if (!(ndp->ndp_flags & NCSI_DEV_PRIV_FLAG_POPULATED)) {
+		nd->nd_state = ncsi_dev_state_probe;
+		schedule_work(&ndp->ndp_work);
+		return 0;
+	}
 
-	return 0;
+	/* Choose active package and channel */
+	ncsi_choose_active_channel(ndp);
+	if (!ndp->ndp_active_channel)
+		return -ENXIO;
+
+	return ncsi_config_dev(nd);
 }
 EXPORT_SYMBOL_GPL(ncsi_start_dev);
 
@@ -894,13 +901,6 @@ EXPORT_SYMBOL_GPL(ncsi_suspend_dev);
 
 void ncsi_stop_dev(struct ncsi_dev *nd)
 {
-	struct ncsi_dev_priv *ndp = TO_NCSI_DEV_PRIV(nd);
-	struct ncsi_package *tmp, *np;
-
-	spin_lock_bh(&ndp->ndp_package_lock);
-	list_for_each_entry_safe(np, tmp, &ndp->ndp_packages, np_node)
-		ncsi_release_package(np);
-	spin_unlock_bh(&ndp->ndp_package_lock);
 }
 EXPORT_SYMBOL_GPL(ncsi_stop_dev);
 

@@ -17,9 +17,9 @@
 enum {
 	ncsi_dev_state_registered	= 0x0000,
 	ncsi_dev_state_functional	= 0x0100,
-	ncsi_dev_state_start		= 0x0200,
+	ncsi_dev_state_probe		= 0x0200,
 	ncsi_dev_state_config		= 0x0300,
-	ncsi_dev_state_suspend		= 0x0400
+	ncsi_dev_state_suspend		= 0x0400,
 };
 
 struct ncsi_dev {
