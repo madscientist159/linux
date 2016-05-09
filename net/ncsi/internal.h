@@ -64,6 +64,7 @@ enum {
 	ncsi_dev_state_config_ebf,
 	ncsi_dev_state_config_ecnt,
 	ncsi_dev_state_config_ec,
+	ncsi_dev_state_config_ae,
 	ncsi_dev_state_config_gls,
 	ncsi_dev_state_config_done,
 	ncsi_dev_state_suspend_select	= 0x0401,

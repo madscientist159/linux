@@ -421,6 +421,7 @@ static void ncsi_dev_config(struct ncsi_dev_priv *ndp)
 	case ncsi_dev_state_config_ebf:
 	case ncsi_dev_state_config_ecnt:
 	case ncsi_dev_state_config_ec:
+	case ncsi_dev_state_config_ae:
 	case ncsi_dev_state_config_gls:
 		atomic_set(&ndp->ndp_pending_reqs, 1);
 
@@ -447,6 +448,11 @@ static void ncsi_dev_config(struct ncsi_dev_priv *ndp)
 			nd->nd_state = ncsi_dev_state_config_ec;
 		} else if (nd->nd_state == ncsi_dev_state_config_ec) {
 			nca.nca_type = NCSI_PKT_CMD_EC;
+			nd->nd_state = ncsi_dev_state_config_ae;
+		} else if (nd->nd_state == ncsi_dev_state_config_ae) {
+			nca.nca_type = NCSI_PKT_CMD_AE;
+			nca.nca_bytes[0] = 0;
+			nca.nca_dwords[1] = 0x7;
 			nd->nd_state = ncsi_dev_state_config_gls;
 		} else if (nd->nd_state == ncsi_dev_state_config_gls) {
 			nca.nca_type = NCSI_PKT_CMD_GLS;
