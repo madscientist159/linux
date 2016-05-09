@@ -686,7 +686,7 @@ error:
 static void ncsi_dev_suspend(struct ncsi_dev_priv *ndp)
 {
 	struct ncsi_dev *nd = &ndp->ndp_ndev;
-	struct ncsi_package *np, *tmp;
+	struct ncsi_package *np;
 	struct ncsi_channel *nc;
 	struct ncsi_cmd_arg nca;
 	int ret;
@@ -740,12 +740,11 @@ static void ncsi_dev_suspend(struct ncsi_dev_priv *ndp)
 		break;
 	case ncsi_dev_state_suspend_done:
 done:
-		spin_lock(&ndp->ndp_package_lock);
-		list_for_each_entry_safe(np, tmp, &ndp->ndp_packages, np_node)
-			ncsi_release_package(np);
-		spin_unlock(&ndp->ndp_package_lock);
+		if (ndp->ndp_flags & NCSI_DEV_PRIV_FLAG_CHANGE_ACTIVE)
+			ncsi_choose_active_channel(ndp);
 
-		if (!(ndp->ndp_flags & NCSI_DEV_PRIV_FLAG_CHANGE_ACTIVE)) {
+		if (!(ndp->ndp_flags & NCSI_DEV_PRIV_FLAG_CHANGE_ACTIVE) ||
+		    !ndp->ndp_active_channel) {
 			nd->nd_state = ncsi_dev_state_functional;
 			nd->nd_link_up = 0;
 			nd->nd_handler(nd);
