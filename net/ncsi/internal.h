@@ -76,7 +76,8 @@ enum {
 struct ncsi_dev_priv {
 	struct ncsi_dev		ndp_ndev;
 	int			ndp_flags;
-#define NCSI_DEV_PRIV_FLAG_CHANGE_ACTIVE	0x1
+#define NCSI_DEV_PRIV_FLAG_POPULATED		0x1
+#define NCSI_DEV_PRIV_FLAG_CHANGE_ACTIVE	0x2
 	struct ncsi_package	*ndp_active_package;
 	struct ncsi_channel	*ndp_active_channel;
 	atomic_t		ndp_package_num;

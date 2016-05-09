@@ -88,8 +88,8 @@ static int ncsi_rsp_handler_cis(struct ncsi_req *nr)
 
 	rsp = (struct ncsi_rsp_pkt *)skb_network_header(nr->nr_rsp);
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel, &np, &nc);
-	if (!np)
-		return -ENODEV;
+	if ((ndp->ndp_flags & NCSI_DEV_PRIV_FLAG_POPULATED) && !nc)
+		return -ENXIO;
 
 	/* Add the channel if necessary */
 	if (!nc)
@@ -122,6 +122,9 @@ static int ncsi_rsp_handler_sp(struct ncsi_req *nr)
 	rsp = (struct ncsi_rsp_pkt *)skb_network_header(nr->nr_rsp);
 	ncsi_find_package_and_channel(ndp, rsp->rsp.common.channel,
 				      &np, NULL);
+	if ((ndp->ndp_flags & NCSI_DEV_PRIV_FLAG_POPULATED) && !np)
+		return -ENXIO;
+
 	if (!np) {
 		np = ncsi_add_package(ndp,
 			NCSI_PACKAGE_INDEX(rsp->rsp.common.channel));
