@@ -470,8 +470,7 @@ static void ncsi_dev_config(struct ncsi_dev_priv *ndp)
 		if (nc->nc_modes[NCSI_MODE_LINK].ncm_data[2] & 0x1)
 			nd->nd_link_up = 1;
 
-		if (!(ndp->ndp_flags & NCSI_DEV_PRIV_FLAG_CHANGE_ACTIVE))
-			nd->nd_handler(nd);
+		nd->nd_handler(nd);
 		ndp->ndp_flags &= ~NCSI_DEV_PRIV_FLAG_CHANGE_ACTIVE;
 
 		break;
@@ -500,13 +499,17 @@ static void ncsi_choose_active_channel(struct ncsi_dev_priv *ndp)
 	ndp->ndp_active_channel = NULL;
 	NCSI_FOR_EACH_PACKAGE(ndp, np) {
 		NCSI_FOR_EACH_CHANNEL(np, nc) {
-			ncm = &nc->nc_modes[NCSI_MODE_LINK];
-			if (ndp->ndp_active_channel ||
-			    !(ncm->ncm_data[2] & 0x1))
-				continue;
+			if (!ndp->ndp_active_channel) {
+				ndp->ndp_active_package = np;
+				ndp->ndp_active_channel = nc;
+			}
 
-			ndp->ndp_active_package = np;
-			ndp->ndp_active_channel = nc;
+			ncm = &nc->nc_modes[NCSI_MODE_LINK];
+			if (ncm->ncm_data[2] & 0x1) {
+				ndp->ndp_active_package = np;
+				ndp->ndp_active_channel = nc;
+				return;
+			}
 		}
 	}
 }
@@ -743,8 +746,7 @@ done:
 		if (ndp->ndp_flags & NCSI_DEV_PRIV_FLAG_CHANGE_ACTIVE)
 			ncsi_choose_active_channel(ndp);
 
-		if (!(ndp->ndp_flags & NCSI_DEV_PRIV_FLAG_CHANGE_ACTIVE) ||
-		    !ndp->ndp_active_channel) {
+		if (!ndp->ndp_active_channel) {
 			nd->nd_state = ncsi_dev_state_functional;
 			nd->nd_link_up = 0;
 			nd->nd_handler(nd);

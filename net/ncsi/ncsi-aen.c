@@ -81,14 +81,14 @@ static int ncsi_aen_handler_lsc(struct ncsi_dev_priv *ndp,
 	ncm->ncm_data[2] = ntohl(lsc->status);
 	ncm->ncm_data[4] = ntohl(lsc->oem_status);
 	if (!ndp->ndp_active_channel ||
-	    ndp->ndp_active_channel != nc ||
-	    ncm->ncm_data[2] & 0x1)
+	    ndp->ndp_active_channel != nc)
 		return 0;
 
 	/* If this channel is the active one and the link is down,
 	 * we have to choose another channel to be active one.
 	 */
-	ndp->ndp_flags |= NCSI_DEV_PRIV_FLAG_CHANGE_ACTIVE;
+	if (!(ncm->ncm_data[2] & 0x1))
+		ndp->ndp_flags |= NCSI_DEV_PRIV_FLAG_CHANGE_ACTIVE;
 	ncsi_suspend_dev(nd);
 
 	return 0;
