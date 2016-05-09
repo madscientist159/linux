@@ -34,7 +34,6 @@ struct ncsi_dev *ncsi_register_dev(struct net_device *dev,
 				   void (*notifier)(struct ncsi_dev *nd));
 int ncsi_start_dev(struct ncsi_dev *nd);
 int ncsi_suspend_dev(struct ncsi_dev *nd);
-void ncsi_stop_dev(struct ncsi_dev *nd);
 void ncsi_unregister_dev(struct ncsi_dev *nd);
 #else /* !CONFIG_NET_NCSI */
 static inline struct ncsi_dev *ncsi_register_dev(struct net_device *dev,
@@ -51,11 +50,6 @@ static inline int ncsi_start_dev(struct ncsi_dev *nd)
 static inline int ncsi_suspend_dev(struct ncsi_dev *nd)
 {
 	return -ENOTTY;
-}
-
-static inline void ncsi_stop_dev(struct ncsi_dev *nd)
-{
-
 }
 
 void inline ncsi_unregister_dev(struct ncsi_dev *nd)

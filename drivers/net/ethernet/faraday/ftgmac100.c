@@ -1182,12 +1182,6 @@ static int ftgmac100_stop_dev(struct net_device *netdev)
 
 static int ftgmac100_stop(struct net_device *netdev)
 {
-	struct ftgmac100 *priv = netdev_priv(netdev);
-
-	/* Stop NCSI device */
-	if (priv->use_ncsi)
-		ncsi_stop_dev(priv->ndev);
-
 	return ftgmac100_stop_dev(netdev);
 }
 static int ftgmac100_hard_start_xmit(struct sk_buff *skb,

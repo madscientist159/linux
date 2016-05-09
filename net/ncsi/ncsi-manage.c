@@ -899,11 +899,6 @@ int ncsi_suspend_dev(struct ncsi_dev *nd)
 }
 EXPORT_SYMBOL_GPL(ncsi_suspend_dev);
 
-void ncsi_stop_dev(struct ncsi_dev *nd)
-{
-}
-EXPORT_SYMBOL_GPL(ncsi_stop_dev);
-
 void ncsi_unregister_dev(struct ncsi_dev *nd)
 {
 	struct ncsi_dev_priv *ndp = TO_NCSI_DEV_PRIV(nd);
