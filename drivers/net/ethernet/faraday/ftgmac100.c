@@ -1099,6 +1099,7 @@ static int ftgmac100_poll(struct napi_struct *napi, int budget)
 static int ftgmac100_open(struct net_device *netdev)
 {
 	struct ftgmac100 *priv = netdev_priv(netdev);
+	struct phy_device *phydev = netdev->phydev;
 	int err;
 
 	err = ftgmac100_alloc_buffers(priv);
@@ -1125,8 +1126,8 @@ static int ftgmac100_open(struct net_device *netdev)
 	ftgmac100_init_hw(priv);
 	ftgmac100_start_hw(priv, priv->use_ncsi ? 100 : 10);
 
-	if (priv->phydev)
-		phy_start(priv->phydev);
+	if (phydev)
+		phy_start(phydev);
 	else if (priv->use_ncsi)
 		netif_carrier_on(priv->netdev);
 
@@ -1160,6 +1161,7 @@ err_alloc:
 static int ftgmac100_stop_dev(struct net_device *netdev)
 {
 	struct ftgmac100 *priv = netdev_priv(netdev);
+	struct phy_device *phydev = netdev->phydev;
 
 	if (!priv->enabled)
 		return 0;
@@ -1170,8 +1172,8 @@ static int ftgmac100_stop_dev(struct net_device *netdev)
 
 	netif_stop_queue(netdev);
 	napi_disable(&priv->napi);
-	if (priv->phydev)
-		phy_stop(priv->phydev);
+	if (phydev)
+		phy_stop(phydev);
 
 	ftgmac100_stop_hw(priv);
 	free_irq(priv->irq, netdev);
@@ -1216,11 +1218,11 @@ static int ftgmac100_hard_start_xmit(struct sk_buff *skb,
 /* optional */
 static int ftgmac100_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
 {
-	struct ftgmac100 *priv = netdev_priv(netdev);
+	struct phy_device *phydev = netdev->phydev;
 
-	if (!priv->phydev)
+	if (!phydev)
 		return -EINVAL;
-	return phy_mii_ioctl(priv->phydev, ifr, cmd);
+	return phy_mii_ioctl(phydev, ifr, cmd);
 }
 
 static int ftgmac100_setup_mdio(struct ftgmac100 *priv)
@@ -1265,11 +1267,15 @@ err_alloc_mdiobus:
 	return err;
 }
 
-static void ftgmac100_destroy_mdio(struct ftgmac100 *priv)
+static void ftgmac100_destroy_mdio(struct net_device *netdev)
 {
-	if (!priv->use_ncsi)
+	struct ftgmac100 *priv = netdev_priv(netdev);
+	struct phy_device *phydev = netdev->phydev;
+
+	if (!phydev || !priv->use_ncsi)
 		return;
-	phy_disconnect(priv->phydev);
+
+	phy_disconnect(phydev);
 	mdiobus_unregister(priv->mii_bus);
 	mdiobus_free(priv->mii_bus);
 }
@@ -1324,7 +1330,7 @@ static int ftgmac100_probe(struct platform_device *pdev)
 	if (pdev->dev.of_node &&
 	    of_get_property(pdev->dev.of_node, "use-nc-si", NULL)) {
 		dev_info(&pdev->dev, "Using NCSI interface\n");
-		priv->phydev = NULL;
+		netdev->phydev = NULL;
 		priv->use_ncsi = true;
 	} else {
 		priv->use_ncsi = false;
@@ -1398,7 +1404,7 @@ static int ftgmac100_probe(struct platform_device *pdev)
 
 err_register_netdev:
 	if (!priv->use_ncsi)
-		ftgmac100_destroy_mdio(priv);
+		ftgmac100_destroy_mdio(netdev);
 	else
 		ncsi_unregister_dev(priv->ndev);
 err_ncsi_dev:
@@ -1422,7 +1428,7 @@ static int __exit ftgmac100_remove(struct platform_device *pdev)
 
 	unregister_netdev(netdev);
 
-	ftgmac100_destroy_mdio(priv);
+	ftgmac100_destroy_mdio(netdev);
 
 	iounmap(priv->base);
 	release_resource(priv->res);
