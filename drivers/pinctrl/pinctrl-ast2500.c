@@ -63,10 +63,24 @@ SS_PIN_DECL(B9, GPIOQ3, I2C4);
 
 FUNC_GROUP_DECL(I2C4, A9, B9);
 
+/* I2C3 */
+
+FUNC_EXPR_DECL_SINGLE(I2C3, FUNC_DESC_SET(SCU90, 16), COND1);
+
+#define A11 128
+SS_PIN_DECL(A11, GPIOQ0, I2C3);
+
+#define A10 129
+SS_PIN_DECL(A10, GPIOQ1, I2C3);
+
+FUNC_GROUP_DECL(I2C3, A11, A10);
+
 
 static struct pinctrl_pin_desc ast2500_pins[AST2500_NR_PINS] = {
 	ASPEED_PINCTRL_PIN(C14),
 	ASPEED_PINCTRL_PIN(A13),
+	ASPEED_PINCTRL_PIN(A11),
+	ASPEED_PINCTRL_PIN(A10),
 	ASPEED_PINCTRL_PIN(A9),
 	ASPEED_PINCTRL_PIN(B9),
 };
@@ -74,11 +88,13 @@ static struct pinctrl_pin_desc ast2500_pins[AST2500_NR_PINS] = {
 static const struct aspeed_pin_group ast2500_groups[] = {
 	ASPEED_PINCTRL_GROUP(I2C9),
 	ASPEED_PINCTRL_GROUP(I2C4),
+	ASPEED_PINCTRL_GROUP(I2C3),
 };
 
 static const struct aspeed_pin_function ast2500_functions[] = {
 	ASPEED_PINCTRL_FUNC(I2C9),
 	ASPEED_PINCTRL_FUNC(I2C4),
+	ASPEED_PINCTRL_FUNC(I2C3),
 };
 
 static struct aspeed_pinctrl_data ast2500_pinctrl = {
