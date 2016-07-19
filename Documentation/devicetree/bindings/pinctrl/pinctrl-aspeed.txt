@@ -1,0 +1,45 @@
+Aspeed Pin Controllers
+----------------------
+
+The Aspeed SoCs vary in functionality inside a generation but have a common mux
+device register layout.
+
+Required properties:
+- compatible: should be one of the following:
+	"aspeed,g4-pinctrl";
+	"aspeed,g5-pinctrl"
+
+The pin controller node should be a child of a syscon node with the required
+property:
+- compatible: "syscon", "simple-mfd"
+
+Refer to the the bindings described in
+Documentation/devicetree/bindings/mfd/syscon.txt
+
+Subnode format:
+
+Please refer to pinctrl-bindings.txt in this directory for details of the
+common pinctrl bindings used by client devices.
+
+The required properties of child nodes are (as defined in pinctrl-bindings):
+- function
+- groups
+
+Each function has only one associated pin group. Each group is named by its
+function.
+
+Examples:
+
+syscon: scu@1e6e2000 {
+	compatible = "syscon", "simple-mfd";
+	reg = <0x1e6e2000 0x1a8>;
+
+	pinctrl: pinctrl@1e6e2000 {
+		compatible = "aspeed,g4-pinctrl";
+
+		pinctrl_i2c3_default: i2c3_default {
+			function = "I2C3";
+			groups = "I2C3";
+		};
+	};
+};
