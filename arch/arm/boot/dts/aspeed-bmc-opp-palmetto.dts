@@ -91,6 +91,8 @@
 
 &i2c2 {
 	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_i2c3_default>;
 
 	tmp423@4c {
 		compatible = "ti,tmp423";
