@@ -20,6 +20,11 @@
 	};
 };
 
+&pinctrl {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_rgmii1_default>;
+};
+
 &uart5 {
 	status = "okay";
 };
