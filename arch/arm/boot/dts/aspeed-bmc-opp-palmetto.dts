@@ -53,6 +53,7 @@
 };
 
 &uart1 {
+	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_ncts1_default &pinctrl_ndcd1_default
 			&pinctrl_nri1_default &pinctrl_ndtr1_default
@@ -61,6 +62,7 @@
 };
 
 &uart4 {
+	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_ncts4_default &pinctrl_ndcd4_default
 			&pinctrl_nri4_default &pinctrl_txd4_default
