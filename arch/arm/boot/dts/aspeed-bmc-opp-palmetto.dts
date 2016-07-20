@@ -49,7 +49,7 @@
 			&pinctrl_pwm4_default &pinctrl_pwm5_default
 			&pinctrl_pwm6_default &pinctrl_pwm7_default
 			&pinctrl_bmcint_default &pinctrl_flack_default
-			&pinctrl_rom8_default>;
+			&pinctrl_rom8_default &pinctrl_rmii1_default>;
 };
 
 &uart1 {
