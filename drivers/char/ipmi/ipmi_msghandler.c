@@ -934,7 +934,7 @@ int ipmi_create_user(unsigned int          if_num,
 	 * removed.
 	 */
 
-	if (handler == NULL)
+	if (handler == NULL || handler->ipmi_recv_hndl == NULL)
 		return -EINVAL;
 
 	/*
