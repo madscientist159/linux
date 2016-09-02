@@ -132,9 +132,11 @@ static bool aspeed_sig_expr_set(const struct aspeed_sig_expr *expr,
 	int i;
 	bool ret;
 
-	ret = aspeed_sig_expr_eval(expr, enable, map);
-	if (ret)
-		return ret;
+	if (!enable) {
+		ret = aspeed_sig_expr_eval(expr, !enable, map);
+		if (!ret)
+			return true;
+	}
 
 	for (i = 0; i < expr->ndescs; i++) {
 		const struct aspeed_sig_desc *desc = &expr->descs[i];
