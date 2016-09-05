@@ -115,6 +115,16 @@
 &i2c2 {
 	status = "okay";
 
+	apss@38 {
+		compatible = "ibm,apss";
+		reg = <0x38>;
+
+		power1_input {
+			channel = <13>;
+			scale = <17>;
+		};
+	};
+
 	tmp423@4c {
 		compatible = "ti,tmp423";
 		reg = <0x4c>;
