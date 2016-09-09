@@ -151,4 +151,13 @@
 		};
 
 	};
+
+	&gpio {
+		pin_func_mode0 {
+			gpio-hog;
+			gpios = <&gpio 62 GPIO_ACTIVE_HIGH>;
+			output-high;
+			line-name = "func_mode0";
+		};
+	};
 };
