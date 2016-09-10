@@ -2,6 +2,8 @@
 
 #include "aspeed-g4.dtsi"
 
+#include <dt-bindings/gpio/gpio.h>
+
 / {
 	model = "Firestone BMC";
 	compatible = "ibm,firestone-bmc", "aspeed,ast2400";
@@ -46,6 +48,23 @@
 				label = "pnor";
 			};
 		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		heartbeat {
+			gpios = <&gpio 140 GPIO_ACTIVE_LOW>;
+		};
+
+		power {
+			gpios = <&gpio 141 GPIO_ACTIVE_LOW>;
+		};
+
+		identify {
+			gpios = <&gpio 2 GPIO_ACTIVE_LOW>;
+		};
+
 	};
 };
 
