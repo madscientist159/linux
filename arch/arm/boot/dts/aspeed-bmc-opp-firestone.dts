@@ -256,6 +256,15 @@
 	// i2c hub PCA9516A
 };
 
+&gpio {
+	cp0_fsi0_data_en {
+		gpio-hog;
+		gpios = <ASPEED_GPIO(H, 6) GPIO_ACTIVE_HIGH>;
+		output-high;
+		line-name = "cp0_fsi0_data_en";
+	};
+};
+
 &vuart {
 	status = "okay";
 };
