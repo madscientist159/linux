@@ -106,11 +106,28 @@
 };
 
 &i2c4 {
+	status = "okay";
+
 	// turismo
+	occ@50 {
+		compatible = "ibm,occ-i2c";
+		reg = <0x50>;
+	};
+
+	tmp423@98 {
+		compatible = "ti,tmp423";
+		reg = <0x80000098>;
+	};
 };
 
 &i2c5 {
 	status = "okay";
+
+	// turismo
+	occ@50 {
+		compatible = "ibm,occ-i2c";
+		reg = <0x50>;
+	};
 
 	tmp423@98 {
 		compatible = "ti,tmp423";
@@ -129,7 +146,7 @@
 };
 
 &i2c8 {
-	// FSI
+	// FSI (bit-banged interface via GPIO)
 	status = "disabled";
 };
 
