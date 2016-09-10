@@ -2,6 +2,8 @@
 
 #include "aspeed-g4.dtsi"
 
+#include <dt-bindings/gpio/aspeed-gpio.h>
+
 / {
 	model = "Firestone BMC";
 	compatible = "ibm,firestone-bmc", "aspeed,ast2400";
@@ -17,6 +19,22 @@
 
 	memory {
 		reg = < 0x40000000 0x10000000 >;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		heartbeat {
+			gpios = <&gpio ASPEED_GPIO(R, 4) GPIO_ACTIVE_LOW>;
+		};
+
+		power {
+			gpios = <&gpio ASPEED_GPIO(R, 5) GPIO_ACTIVE_LOW>;
+		};
+
+		identify {
+			gpios = <&gpio ASPEED_GPIO(A, 2) GPIO_ACTIVE_LOW>;
+		};
 	};
 
 	ahb {
