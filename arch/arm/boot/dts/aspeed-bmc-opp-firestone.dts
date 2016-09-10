@@ -73,6 +73,10 @@
 	no-hw-checksum;
 };
 
+&uart5 {
+	status = "okay";
+};
+
 &i2c0 {
 	// grounded
 	status = "disabled";
