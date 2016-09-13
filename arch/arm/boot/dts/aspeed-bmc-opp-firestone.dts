@@ -51,6 +51,8 @@
 
 &mac0 {
 	status = "okay";
+
+	no-hw-checksum;
 };
 
 &i2c0 {
