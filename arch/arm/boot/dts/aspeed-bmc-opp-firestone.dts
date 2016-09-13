@@ -9,6 +9,7 @@
 	compatible = "ibm,firestone-bmc", "aspeed,ast2400";
 
 	aliases {
+		serial0 = &vuart;
 		serial1 = &uart1;
 		serial2 = &uart2;
 		serial4 = &uart5;
@@ -207,4 +208,8 @@
 
 &i2c13 {
 	// i2c hub PCA9516A
+};
+
+&vuart {
+	status = "okay";
 };
