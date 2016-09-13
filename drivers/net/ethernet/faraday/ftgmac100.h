@@ -133,6 +133,8 @@
 #define FTGMAC100_DMAFIFOS_RXDMA_REQ		(1 << 30)
 #define FTGMAC100_DMAFIFOS_TXDMA_REQ		(1 << 31)
 
+#define FTGMAC100_OFFSET_REVR_NEW_INTERFACE	(1 << 31)
+
 /*
  * Receive buffer size register
  */

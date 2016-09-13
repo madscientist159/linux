@@ -1250,12 +1250,18 @@ static int ftgmac100_setup_mdio(struct net_device *netdev)
 {
 	struct ftgmac100 *priv = netdev_priv(netdev);
 	struct platform_device *pdev = to_platform_device(priv->dev);
+	uint32_t revcr;
 	int i, err = 0;
 
 	/* initialize mdio bus */
 	priv->mii_bus = mdiobus_alloc();
 	if (!priv->mii_bus)
 		return -EIO;
+
+	/* This driver only supports the old MDIO interface -- enable it */
+	revcr = ioread32(priv->base + FTGMAC100_OFFSET_REVR);
+	revcr &= ~FTGMAC100_OFFSET_REVR_NEW_INTERFACE;
+	iowrite32(revcr, priv->base + FTGMAC100_OFFSET_REVR);
 
 	priv->mii_bus->name = "ftgmac100_mdio";
 	snprintf(priv->mii_bus->id, MII_BUS_ID_SIZE, "%s-%d",
