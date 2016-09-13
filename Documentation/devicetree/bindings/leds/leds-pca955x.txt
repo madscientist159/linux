@@ -1,0 +1,35 @@
+*NXP - pca955x PWM LED Driver
+
+The PCA955x family are SMBus I/O expanders optimized for blinking LEDs.
+
+Required properties:
+	- compatible:
+		"nxp,pca9550"
+		"nxp,pca9551"
+		"nxp,pca9552"
+		"nxp,pca9553"
+	- reg -  I2C slave address
+
+Each led is represented as a sub-node of the nxp,pca955x.
+
+Optional sub-node properties:
+	- label: see Documentation/devicetree/bindings/leds/common.txt
+	- linux,default-trigger: see Documentation/devicetree/bindings/leds/common.txt
+
+Example:
+  #include <dt-bindings/leds/leds-pca955x.h>
+
+  leds: pca955x@60 {
+    compatible = "nxp,pca9530";
+    reg = <0x60>;
+
+    red-power {
+      label = "pca:red:power";
+    };
+    green-power {
+      label = "pca:green:power";
+    };
+  };
+
+For more product information please see the link below:
+http://nxp.com/documents/data_sheet/PCA9552.pdf

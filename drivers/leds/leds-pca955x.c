@@ -1,5 +1,6 @@
 /*
  * Copyright 2007-2008 Extreme Engineering Solutions, Inc.
+ * Copyright 2016 Raptor Engineering, LLC
  *
  * Author: Nate Case <ncase@xes-inc.com>
  *
@@ -48,6 +49,8 @@
 #include <linux/err.h>
 #include <linux/i2c.h>
 #include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
 
 /* LED select registers determine the source that drives LED outputs */
 #define PCA955X_LS_LED_ON	0x0	/* Output LOW */
@@ -99,6 +102,18 @@ static const struct i2c_device_id pca955x_id[] = {
 	{ }
 };
 MODULE_DEVICE_TABLE(i2c, pca955x_id);
+
+#ifdef CONFIG_OF
+static const struct of_device_id of_pca955x_leds_match[] = {
+	{ .compatible = "nxp,pca9550", .data = (void *)pca9550 },
+	{ .compatible = "nxp,pca9551", .data = (void *)pca9551 },
+	{ .compatible = "nxp,pca9552", .data = (void *)pca9552 },
+	{ .compatible = "nxp,pca9553", .data = (void *)pca9553 },
+	{},
+};
+
+MODULE_DEVICE_TABLE(of, of_pca955x_leds_match);
+#endif
 
 struct pca955x {
 	struct mutex lock;
@@ -240,9 +255,45 @@ static int pca955x_led_set(struct led_classdev *led_cdev,
 	return 0;
 }
 
+static struct led_platform_data *
+pca955x_of_populate_pdata(struct device *dev, struct device_node *np)
+{
+	struct led_platform_data *pdata;
+	struct device_node *child;
+	const struct of_device_id *match;
+	int devid, maxleds;
+	int i = 0;
+
+	match = of_match_device(of_pca955x_leds_match, dev);
+	if (!match)
+		return ERR_PTR(-ENODEV);
+
+	devid = (int)(uintptr_t)match->data;
+	maxleds = pca955x_chipdefs[devid].bits;
+
+	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return ERR_PTR(-ENOMEM);
+
+	for_each_child_of_node(np, child) {
+		if (of_property_read_string(child, "label",
+					    &pdata->leds[i].name))
+			pdata->leds[i].name = child->name;
+		of_property_read_string(child, "linux,default-trigger",
+					&pdata->leds[i].default_trigger);
+		if (++i >= maxleds) {
+			of_node_put(child);
+			break;
+		}
+	}
+
+	return pdata;
+}
+
 static int pca955x_probe(struct i2c_client *client,
 					const struct i2c_device_id *id)
 {
+	int devid;
 	struct pca955x *pca955x;
 	struct pca955x_led *pca955x_led;
 	struct pca955x_chipdef *chip;
@@ -250,9 +301,33 @@ static int pca955x_probe(struct i2c_client *client,
 	struct led_platform_data *pdata;
 	int i, err;
 
-	chip = &pca955x_chipdefs[id->driver_data];
 	adapter = to_i2c_adapter(client->dev.parent);
 	pdata = dev_get_platdata(&client->dev);
+
+	if (!pdata) {
+		struct device_node *np = client->dev.of_node;
+
+		if (np) {
+			pdata =
+				pca955x_of_populate_pdata(&client->dev, np);
+			if (IS_ERR(pdata))
+				return PTR_ERR(pdata);
+		} else {
+			dev_err(&client->dev, "no platform data\n");
+			return -EINVAL;
+		}
+		const struct of_device_id *of_id = of_match_device(
+			of_pca955x_leds_match, &client->dev);
+		if (!of_id) {
+			dev_err(&client->dev, "no device match found\n");
+			return -EINVAL;
+		}
+		devid = (int)(uintptr_t)of_id->data;
+	} else {
+		devid = id->driver_data;
+	}
+
+	chip = &pca955x_chipdefs[devid];
 
 	/* Make sure the slave address / chip type combo given is possible */
 	if ((client->addr & ~((1 << chip->slv_addr_shift) - 1)) !=
@@ -358,6 +433,7 @@ static int pca955x_remove(struct i2c_client *client)
 static struct i2c_driver pca955x_driver = {
 	.driver = {
 		.name	= "leds-pca955x",
+		.of_match_table = of_match_ptr(of_pca955x_leds_match),
 	},
 	.probe	= pca955x_probe,
 	.remove	= pca955x_remove,
