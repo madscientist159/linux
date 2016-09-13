@@ -175,11 +175,57 @@
 	status = "okay";
 
 	leds@c0 {
-		compatible = "pca,pca9552led";
+		compatible = "nxp,pca9552";
 		reg = <0x800000c0>;
-		// led9 - led_fault_n
-		// led10 - pwr_led_n
-		// led11 - rear_id_led_n
+
+		centaur_present_0 {
+			//
+		};
+		centaur_present_1 {
+			//
+		};
+		centaur_present_2 {
+			//
+		};
+		centaur_present_3 {
+			//
+		};
+		centaur_present_4 {
+			//
+		};
+		centaur_present_5 {
+			//
+		};
+		centaur_present_6 {
+			//
+		};
+		centaur_present_7 {
+			//
+		};
+		no-connect-0 {
+			//
+		};
+		fault {
+			//
+		};
+		power {
+			//
+		};
+		identify-rear {
+			//
+		};
+		no-connect-1 {
+			//
+		};
+		power-supply-smbus-reset {
+			//
+		};
+		spi-vid-standby-reset {
+			//
+		};
+		apss-reset {
+			//
+		};
 	};
 
 	rtc@d0 {
