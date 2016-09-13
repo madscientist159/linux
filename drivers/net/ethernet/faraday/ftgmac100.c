@@ -1423,8 +1423,7 @@ static int ftgmac100_probe(struct platform_device *pdev)
 	 * in that case.
 	 */
 	netdev->features = NETIF_F_IP_CSUM | NETIF_F_GRO;
-	if (priv->use_ncsi &&
-	    of_get_property(pdev->dev.of_node, "no-hw-checksum", NULL))
+	if (of_get_property(pdev->dev.of_node, "no-hw-checksum", NULL))
 		netdev->features &= ~NETIF_F_IP_CSUM;
 
 
