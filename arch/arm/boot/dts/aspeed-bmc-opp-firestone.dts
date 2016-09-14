@@ -9,6 +9,8 @@
 	compatible = "ibm,firestone-bmc", "aspeed,ast2400";
 
 	aliases {
+		serial1 = &uart1;
+		serial2 = &uart2;
 		serial4 = &uart5;
 	};
 
@@ -71,6 +73,14 @@
 	status = "okay";
 
 	no-hw-checksum;
+};
+
+&uart1 {
+	status = "okay";
+};
+
+&uart2 {
+	status = "okay";
 };
 
 &uart5 {
