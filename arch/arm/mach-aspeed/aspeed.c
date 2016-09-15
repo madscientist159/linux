@@ -119,6 +119,18 @@ static void __init do_palmetto_setup(void)
 	writel(0x01C0007F, AST_IO(AST_BASE_SCU | 0x88));
 }
 
+static void __init do_firestone_setup(void)
+{
+	do_common_setup();
+
+	/* Setup PNOR address mapping for 64M flash */
+	writel(0x30000C00, AST_IO(AST_BASE_LPC | 0x88));
+	writel(0xFC0003FF, AST_IO(AST_BASE_LPC | 0x8C));
+
+	/* Override serial destination to use the dedicated serial port */
+	writel(0x00004000, AST_IO(AST_BASE_LPC | 0x174));
+}
+
 static void __init do_garrison_setup(void)
 {
 	do_common_setup();
@@ -196,6 +208,8 @@ static void __init aspeed_init_early(void)
 		do_barreleye_setup();
 	if (of_machine_is_compatible("tyan,palmetto-bmc"))
 		do_palmetto_setup();
+	if (of_machine_is_compatible("ibm,firestone-bmc"))
+		do_firestone_setup();
 	if (of_machine_is_compatible("ibm,garrison-bmc"))
 		do_garrison_setup();
 	if (of_machine_is_compatible("aspeed,ast2500-evb"))
