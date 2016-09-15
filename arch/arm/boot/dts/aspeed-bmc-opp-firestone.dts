@@ -102,7 +102,16 @@
 };
 
 &i2c3 {
+	status = "okay";
+
 	// i2c hub PCA9516A
+	// spruce / madrone PDB
+	// APSS
+	// FIR (fan / SATA backplane)
+	max31785l@52 {
+		compatible = "max,max31785";
+		reg = <0x52>;
+	};
 };
 
 &i2c4 {
