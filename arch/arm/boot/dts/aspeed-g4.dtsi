@@ -122,6 +122,11 @@
 						groups = "TIMER6";
 					};
 
+					pinctrl_mdio1_default: mdio1_default {
+						function = "MDIO1";
+						groups = "MDIO1";
+					};
+
 					pinctrl_mdio2_default: mdio2_default {
 						function = "MDIO2";
 						groups = "MDIO2";
