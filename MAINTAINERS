@@ -7256,6 +7256,13 @@ S:	Maintained
 F:	Documentation/hwmon/max20751
 F:	drivers/hwmon/max20751.c
 
+MAX31785 HARDWARE MONITOR AND FAN CONTROLLER DRIVER
+M:	"Timothy Pearson" <tpearson@raptorengineering.com>
+L:	linux-hwmon@vger.kernel.org
+S:	Maintained
+F:	Documentation/hwmon/max31785
+F:	drivers/hwmon/max31785.c
+
 MAX6650 HARDWARE MONITOR AND FAN CONTROLLER DRIVER
 M:	"Hans J. Koch" <hjk@hansjkoch.de>
 L:	linux-hwmon@vger.kernel.org
